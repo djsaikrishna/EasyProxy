@@ -397,8 +397,8 @@ async def handle_v1_request(request):
             if cmd == "request.post":
                 is_rapid_retry = False
             
-            # Use cache ONLY if it's fresh (less than 10 mins), the proxy/IP has not changed, and it's not a rapid retry
-            if cache_age < 600 and current_proxy_str == cached_proxy_str and not is_rapid_retry:
+            # Use cache ONLY if it's fresh (less than 1 hour), the proxy/IP has not changed, and it's not a rapid retry
+            if cache_age < 3600 and current_proxy_str == cached_proxy_str and not is_rapid_retry:
                 logger.info(f"Found cached cookies for domain: {domain} (age: {int(cache_age)}s, proxy: {current_proxy_str}). Verifying...")
                 res = await fetch_page_with_cached_cookies(
                     url, 
@@ -417,7 +417,7 @@ async def handle_v1_request(request):
                     _save_cookie_cache(cache)
                     return web.json_response(res)
             else:
-                reason = "stale" if cache_age >= 600 else ("rapid retry / failed cache" if is_rapid_retry else "proxy/IP changed")
+                reason = "stale" if cache_age >= 3600 else ("rapid retry / failed cache" if is_rapid_retry else "proxy/IP changed")
                 logger.info(f"Cached cookies for domain {domain} are invalid or failed ({reason}). Forcing new solver run.")
                 if is_rapid_retry:
                     # Clear cache entry to prevent looping
